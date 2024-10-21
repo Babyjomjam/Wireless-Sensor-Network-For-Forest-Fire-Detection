@@ -1,0 +1,207 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Sensor Data Map</title>
+    <!-- Import Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <style>
+        /* สร้างพื้นหลังแบบ gradient */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #F893B5, #FAD0C4);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            font-size: 3em;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+            animation: fadeIn 2s ease-in-out;
+        }
+
+        /* การทำให้แผนที่มีมิติมากขึ้นและใช้ความโค้งมน */
+        #map {
+            height: 500px;
+            width: 80%;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+            animation: slideIn 2s ease-in-out;
+        }
+
+        /* การเคลื่อนไหวแผนที่และข้อมูล */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        /* ปรับกล่องหลัก */
+        /* สไตล์กล่องแนะนำเส้นทางปกติ */
+        .leaflet-routing-container.leaflet-control {
+            background-color:  #a8adad !important;
+            color: white !important;
+            padding: 10px !important;
+            font-size: 16px !important;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease-in-out;
+        }
+        
+        /* เมื่อเมาส์ชี้หรือคลิก */
+        .leaflet-routing-container.leaflet-control:focus, 
+        .leaflet-routing-container.leaflet-control:hover {
+            background-color:  #a8adad !important;
+            color: black !important;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7);
+            transform: scale(1.05);
+        }
+        
+        /* สไตล์ข้อความภายในกล่อง */
+        .leaflet-routing-container .leaflet-routing-alt .leaflet-routing-instructions {
+            background-color:  #a8adad !important;
+            color: white !important;
+        }
+        
+        .leaflet-routing-container .leaflet-routing-alt .leaflet-routing-instructions .leaflet-routing-text {
+            color: white !important;
+        }
+        
+        /* ปรับข้อความปลายทาง (สีเทา) ให้ชัดขึ้น */
+        .leaflet-routing-container .leaflet-routing-alt .leaflet-routing-instructions .leaflet-routing-endpoint {
+            background-color: rgba(0, 0, 0, 0.7) !important;
+            color: white !important;
+        }
+        
+        /* ระยะทาง */
+        .leaflet-routing-container .leaflet-routing-alt .leaflet-routing-instructions .leaflet-routing-distance {
+            color: white !important;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Interactive Sensor Data Map</h1>
+
+    <!-- แผนที่ -->
+    <div id="map"></div>
+
+    <!-- Import Leaflet JavaScript และ Routing Machine -->
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    <!-- Mapbox JS -->
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js'></script>
+
+    <script>
+        // ใส่ Mapbox Access Token ของคุณที่นี่
+        var mapboxAccessToken = 'pk.eyJ1IjoieW90YWthMTYiLCJhIjoiY20xa2gxN2twMTRvbjJrc2FlNDFvbXVueCJ9.GRDUR8J5xKJhhRMUj8_KNw';
+
+        // สร้างแผนที่และกำหนดตำแหน่งเริ่มต้น
+        var map = L.map('map').setView([16.576714, 100.882492], 19);  // ตำแหน่งเริ่มต้น
+
+        // เพิ่ม Tile Layer ใหม่จาก Mapbox (ใช้ภาพดาวเทียมแบบมีป้ายถนนและชื่อสถานที่)
+        L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v11/tiles/{z}/{x}/{y}?access_token=' + mapboxAccessToken, {
+            maxZoom: 17,
+            tileSize: 512,
+            zoomOffset: -1,
+            attribution: '© Mapbox © OpenStreetMap'
+        }).addTo(map);
+
+
+        // สร้างไอคอนหมุดปกติ
+        var defaultIcon = L.icon({
+            iconUrl: 'https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+        });
+
+        // สร้างไอคอนไฟ (จากไฟล์ static)
+        var fireIcon = L.icon({
+            iconUrl: "{% static 'img/—Pngtree—hand drawn cartoon element illustration_5774099.png' %}",  // URL รูปไฟ
+            iconSize: [40, 40],  // ขนาดไอคอน
+            iconAnchor: [20, 40],  // จุด anchor ของไอคอน
+        });
+
+        // ข้อมูลเซ็นเซอร์จาก Django
+        var sensors = {{ sensors|safe }};
+        var centerLatLng = [16.576714, 100.882492]; // ตำแหน่ง center ของแผนที่ จุดบัญชาการ ทุ่งแสลงหลวง 
+
+        // สร้างตัวแปร LatLngBounds เพื่อเก็บพิกัดทั้งหมด
+        var bounds = L.latLngBounds();
+
+        // ตัวแปรเก็บข้อมูล Routing Control เพื่อไม่ให้ทับซ้อนกัน
+        var routingControl = null;
+
+        // วนลูปผ่านข้อมูลเซ็นเซอร์เพื่อเพิ่มหมุดในแผนที่
+        sensors.forEach(function(sensor) {
+            var markerIcon = (sensor.tem > 30 && sensor.gas < 30 && sensor.humi < 30) ? fireIcon : defaultIcon;
+
+            if (sensor.lat !== null && sensor.lng !== null) {
+                var marker = L.marker([sensor.lat, sensor.lng], { icon: markerIcon }).addTo(map)
+                    .bindPopup('<b>Temperature:</b> ' + sensor.tem + ' °C<br>' +
+                            '<b>Humidity:</b> ' + sensor.humi + ' %<br>' +
+                            '<b>Pressure:</b> ' + sensor.pressure + ' hPa<br>' +
+                            '<b>Gas:</b> ' + sensor.gas + ' KOhms<br>' +
+                            '<b>Altitude:</b> ' + sensor.altitude + ' m<br>' +
+                            '<b>Timestamp:</b> ' + sensor.timestamp);  // เพิ่มข้อมูล timestamp
+
+                // เพิ่มพิกัดของหมุดไปยัง bounds
+                bounds.extend([sensor.lat, sensor.lng]);
+
+                // ถ้าหมุดเป็นรูปไฟ ให้เพิ่มการนำทางจาก center ไปยังหมุด
+                /* if (markerIcon === fireIcon) {
+                    marker.on('click', function() {
+                        // ลบ routeControl ก่อนหน้า ถ้ามีอยู่
+                        if (routingControl !== null) {
+                            map.removeControl(routingControl);
+                        }
+
+                        // การนำทางหลังจากคลิก ไม่ให้หมุดถูกลบหรือเปลี่ยน
+                        routingControl = L.Routing.control({
+                            waypoints: [
+                                L.latLng(centerLatLng[0], centerLatLng[1]),  // ตำแหน่ง center
+                                L.latLng(sensor.lat, sensor.lng)              // ตำแหน่งของ sensor ที่ถูกคลิก
+                            ],
+                            routeWhileDragging: false,  // ไม่ต้องให้ลากเส้นทาง
+                            lineOptions: {
+                                styles: [{color: 'red', weight: 3}]  // ปรับเส้นทางให้เป็นสีแดงและหนา
+                            },
+                            createMarker: function() { return null; },  // ปิดการสร้างหมุดใหม่
+                            router: L.Routing.mapbox(mapboxAccessToken) // ใช้ Mapbox Directions API
+                        }).addTo(map);
+                    });
+                } */
+            }
+        });
+
+        
+        // ซูมแผนที่ไปที่หมุดทั้งหมด
+        if (sensors.length > 0) {
+            map.fitBounds(bounds);  // ฟังก์ชันนี้จะซูมและโฟกัสที่หมุดทั้งหมด
+        }
+
+    </script>
+
+</body>
+</html>

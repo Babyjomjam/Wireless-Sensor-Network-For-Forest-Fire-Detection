@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}  <!-- โหลด static เพื่อให้ Django รู้จักไฟล์ static -->
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forest Fire Detection</title>
+    <!-- เอาฟ้อนต์มาจาก Google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Text:ital@0;1&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background-image: url("{% static 'img/Screenshot-2023-03-30-093817.webp' %}");  /* โหลดรูปภาพพื้นหลังจากโฟลเดอร์ static */
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh;
+        }
+        div {
+            font-size: 50px;
+            color: white;
+            text-align: center;
+            font-family: "DM Serif Text", serif;
+        }
+        h2 {
+            line-height: 0.11;
+        }
+        h3 {
+            line-height: 1.5;
+        }
+        .button {
+            border: 1px solid black;
+            background-color: white;
+            padding: 3px;
+            text-decoration: none;
+            color: black;
+            text-align: center;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <h1>Welcome</h1>
+        <h2>To</h2>
+        <h3>Forest Fire Detection</h3>
+    </div>
+    <!-- ลิงก์ที่ดูเหมือนปุ่ม เดี๋ยวเปลี่ยนเป็นmap--> 
+    <a href="{% url 'sensor_data' %}" class="button">
+        <span>Let's go</span>
+    </a>
+</body>
+</html>
